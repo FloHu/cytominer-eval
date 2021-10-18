@@ -1,7 +1,3 @@
-"""
-Functions to calculate precision and recall at a given k
-"""
-
 import numpy as np
 import pandas as pd
 from typing import List, Union
@@ -11,7 +7,22 @@ from cytominer_eval.utils.operation_utils import assign_replicates
 from cytominer_eval.utils.transform_utils import set_pair_ids, assert_melt
 
 
-def precision_recall(
+def get_precision_recall_input(
+    similarity_melted_df: pd.DataFrame, 
+    replicate_groups: List[str], 
+) -> pd.DataFrame:
+    # Determine pairwise replicates and make sure to sort based on the metric!
+    similarity_melted_df = assign_replicates(
+        similarity_melted_df=similarity_melted_df, replicate_groups=replicate_groups
+    ).sort_values(by="similarity_metric", ascending=False)
+
+    # Check to make sure that the melted dataframe is full
+    assert_melt(similarity_melted_df, eval_metric="precision_recall")
+ 
+    return similarity_melted_df
+
+
+def precision_recall_custom(
     similarity_melted_df: pd.DataFrame,
     replicate_groups: List[str],
     k: Union[int, List[int]],
@@ -36,20 +47,13 @@ def precision_recall(
     pandas.DataFrame
         precision and recall metrics for all replicate groups given k
     """
-    # Determine pairwise replicates and make sure to sort based on the metric!
-    similarity_melted_df = assign_replicates(
-        similarity_melted_df=similarity_melted_df, replicate_groups=replicate_groups
-    ).sort_values(by="similarity_metric", ascending=False)
-
-    # Check to make sure that the melted dataframe is full
-    assert_melt(similarity_melted_df, eval_metric="precision_recall")
-
     # Extract out specific columns
     pair_ids = set_pair_ids()
     replicate_group_cols = [
         "{x}{suf}".format(x=x, suf=pair_ids[list(pair_ids)[0]]["suffix"])
         for x in replicate_groups
     ]
+
     # iterate over all k
     precision_recall_df = pd.DataFrame()
     if type(k) == int:
@@ -65,6 +69,3 @@ def precision_recall(
     rename_cols = dict(zip(replicate_group_cols, replicate_groups))
 
     return precision_recall_df.reset_index().rename(rename_cols, axis="columns")
-
-
-
