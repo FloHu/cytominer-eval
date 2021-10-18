@@ -4,3 +4,4 @@ from .precision_recall_custom import get_precision_recall_input, precision_recal
 from .grit import grit
 from .mp_value import mp_value
 from .enrichment import enrichment
+from .hitk import hitk
